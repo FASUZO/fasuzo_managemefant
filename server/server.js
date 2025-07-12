@@ -1,0 +1,131 @@
+require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// 可配置参数
+const LOG_LEVEL   = process.env.LOG_LEVEL   || 'info';   // debug | info | error
+const JSON_LIMIT  = process.env.JSON_LIMIT  || '50mb';   // eg. 100mb
+const DATA_DIR_ENV= process.env.DATA_DIR    || 'data';   // 绝对路径或相对项目根目录
+
+// 前端默认行为配置
+const DEFAULT_DARK        = process.env.DEFAULT_DARK   === 'true';
+const DEFAULT_AUTO_SAVE   = process.env.DEFAULT_AUTO_SAVE === 'true';
+const DEFAULT_DEBUG_FRONT = process.env.DEFAULT_DEBUG  === 'true';
+const FONT_URL            = process.env.FONT_URL || '';
+
+// 简易日志封装
+const logger = {
+  debug: (...args)=> { if(LOG_LEVEL === 'debug') console.log('[DEBUG]', ...args); },
+  info : (...args)=> { if(['debug','info'].includes(LOG_LEVEL)) console.log('[INFO ]', ...args); },
+  error: (...args)=> console.error('[ERROR]', ...args)
+};
+
+// ----------------- 新增: 初始数据常量 -----------------
+const DEFAULT_DATA = {
+  categories: ['设备', '软件', '零件', '其他'],
+  channels: ['淘宝', '京东', '拼多多', '闲鱼', '其他'],
+  tags: [],
+  assets: []
+};
+// -----------------------------------------------------
+
+// 项目根目录
+const ROOT_DIR = path.join(__dirname, '..');
+
+// 若存在 Vite 打包后的 dist 目录，则优先使用
+const STATIC_DIR = fs.existsSync(path.join(ROOT_DIR, 'dist'))
+  ? path.join(ROOT_DIR, 'dist')
+  : ROOT_DIR;
+
+// 数据目录及文件路径 (支持自定义)
+const DATA_DIR = path.isAbsolute(DATA_DIR_ENV) ? DATA_DIR_ENV : path.join(ROOT_DIR, DATA_DIR_ENV);
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+const DATA_PATH = path.join(DATA_DIR, 'data.json');
+
+// 图片上传目录（位于 data/uploads）
+const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
+
+// 如果 data.json 不存在，创建默认结构
+if (!fs.existsSync(DATA_PATH)) {
+  fs.writeFileSync(DATA_PATH, JSON.stringify(DEFAULT_DATA, null, 2));
+}
+
+// 允许更大的 JSON 体（最多 50MB），以保存包含 Base64 图片的数据
+app.use(express.json({ limit: JSON_LIMIT }));
+
+// 全局错误处理（捕获过大请求体等）
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large') {
+    console.error('Payload too large:', err.length);
+    return res.status(413).json({ ok: false, message: 'Payload too large', max: '50mb' });
+  }
+  return next(err);
+});
+
+// 提供静态资源（HTML/CSS/JS）
+app.use(express.static(STATIC_DIR));
+
+// 提供上传图片静态访问
+app.use('/uploads', express.static(UPLOAD_DIR));
+
+// 提供前端运行时配置
+app.get('/api/env', (_,res)=>{
+  res.json({
+    defaultDark: DEFAULT_DARK,
+    defaultAutoSave: DEFAULT_AUTO_SAVE,
+    debug: DEFAULT_DEBUG_FRONT,
+    fontUrl: FONT_URL
+  });
+});
+
+// 读取数据
+app.get('/api/data', (_, res) => {
+  res.sendFile(DATA_PATH);
+});
+
+// 保存数据（整包覆盖）
+app.post('/api/data', (req, res) => {
+  // 打印调试信息：请求体大小
+  const bodySize = Buffer.byteLength(JSON.stringify(req.body));
+  logger.info('Saving data, size:', bodySize, 'bytes');
+  try {
+    const data = req.body;
+    if(Array.isArray(data.assets)){
+      data.assets = data.assets.map(a=>{
+        if(a.image && a.image.startsWith('data:image')){
+          try{
+            const match = a.image.match(/^data:image\/(\w+);base64,(.+)$/);
+            if(match){
+              const ext = match[1];
+              const b64 = match[2];
+              const fileName = `img_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+              const filePath = path.join(UPLOAD_DIR, fileName);
+              fs.writeFileSync(filePath, Buffer.from(b64, 'base64'));
+              a.image = `/uploads/${fileName}`;
+            }
+          }catch(e){ console.error('保存图片失败', e); }
+        }
+        return a;
+      });
+    }
+    fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, err: err.message });
+  }
+});
+
+// 重置数据为初始状态
+app.post('/api/reset', (req, res) => {
+  fs.writeFileSync(DATA_PATH, JSON.stringify(DEFAULT_DATA, null, 2));
+  res.json({ ok: true });
+});
+
+app.listen(PORT, () => {
+  logger.info(`Server running at http://localhost:${PORT}`);
+}); 

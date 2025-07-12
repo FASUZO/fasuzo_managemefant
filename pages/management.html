@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>管理</title>
+  <link rel="stylesheet" href="../styles/base.css">
+  <link rel="stylesheet" href="../styles/main.css">
+</head>
+<body>
+  <main class="manage-main">
+    <h1>管理界面</h1>
+    <!-- 顶部滑动开关区域 -->
+    <div class="switch-bar">
+      <label class="switch">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="slider round"></span>
+      </label>
+      <span class="switch-label">暗黑模式</span>
+
+      <label class="switch">
+        <input type="checkbox" id="autoSaveToggle">
+        <span class="slider round"></span>
+      </label>
+      <span class="switch-label">自动保存</span>
+    </div>
+
+    <section class="card">
+      <h2>资产分类管理</h2>
+      <ul id="categoryList"></ul>
+      <button id="addCategory" type="button">添加分类</button>
+      <button id="deleteCategoryBtn" class="btn-like btn-danger" style="margin-left:8px;">删除分类</button>
+    </section>
+
+    <section class="card">
+      <h2>购入渠道管理</h2>
+      <ul id="channelList"></ul>
+      <button id="addChannel" type="button">添加渠道</button>
+      <button id="deleteChannelBtn" class="btn-like btn-danger" style="margin-left:8px;">删除渠道</button>
+    </section>
+
+    <section class="card">
+      <h2>标签管理</h2>
+      <ul id="tagList"></ul>
+      <button id="addTag" type="button">添加标签</button>
+      <button id="deleteTagBtn" class="btn-like btn-danger" style="margin-left:8px;">删除标签</button>
+    </section>
+
+    <section class="card long-card">
+      <h2>数据列管理</h2>
+      <!-- 顺序调整与隐藏显示已合并 -->
+      <div id="columnToggles"></div>
+      <div style="margin-top:8px;">
+        <button id="addColumnBtn" class="btn-like">＋ 添加列</button>
+        <button id="deleteColumnBtn" class="btn-like btn-danger" style="margin-left:8px;">－ 删除列</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>数据管理</h2>
+      <div class="btn-container">
+        <button id="exportData" class="btn-like">导出数据</button>
+        <label for="importFile" class="btn-like">导入数据</label>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+        <button id="viewDataBtn" class="btn-like">查看数据</button>
+        <button id="editDataBtn" class="btn-like">修改数据</button>
+        <button id="resetDataBtn" class="btn-like btn-danger">重置数据</button>
+      </div>
+    </section>
+
+    <!-- 保存按钮（统一提交修改） -->
+    <button id="saveDataBtn" aria-label="保存数据" style="bottom:20px;">💾</button>
+  </main>
+
+  <nav id="mainNav"></nav>
+
+  <script type="module" src="../scripts/common.js"></script>
+  <script type="module" src="../scripts/management.js"></script>
+</body>
+</html> 

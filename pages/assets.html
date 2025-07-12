@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>资产</title>
+  <link rel="stylesheet" href="../styles/base.css">
+  <link rel="stylesheet" href="../styles/main.css">
+  <!-- debug.js 由 assets.js 模块内部导入，无需单独引用 -->
+</head>
+<body>
+  <main>
+    <h1>资产管理</h1>
+
+    <div class="table-wrapper">
+      <table id="assetsTable">
+        <caption class="sr-only">资产列表</caption>
+        <thead>
+          <tr>
+            <th scope="col">资产名称</th>
+            <th scope="col">资产分类</th>
+            <th scope="col">分类</th>
+            <th scope="col">金额</th>
+            <th scope="col">时间</th>
+            <th scope="col">购入渠道</th>
+            <th scope="col" data-key="image">附件</th>
+            <th scope="col">备注</th>
+            <th scope="col">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- 新增行按钮 -->
+  <button id="addRowBtn" aria-label="新增一行">＋</button>
+  <!-- 保存按钮 -->
+  <button id="saveDataBtn" aria-label="保存数据">💾</button>
+
+  <nav id="mainNav"></nav>
+
+  <script type="module" src="../scripts/common.js"></script>
+  <script type="module" src="../scripts/assets.js"></script>
+</body>
+</html> 
