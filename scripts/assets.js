@@ -130,6 +130,8 @@ import { logInfo, logDebug } from './debug.js';
         const diff = ev.clientX - startX;
         const newW = Math.max(60, startW + diff);
         colDef.width = newW;
+        // 立即更新当前列的宽度，使拖拽效果实时可见
+        th.style.width = newW + 'px';
         applyColumnWidths();
         if(Math.abs(diff)>2){ moved=true; window.__colResizing=true; }
       }

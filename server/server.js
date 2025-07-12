@@ -1,3 +1,18 @@
+/****
+ * Asset Manager API Server (Express)
+ * ----------------------------------
+ * 环境变量一览（全部可选）：
+ *   PORT               监听端口（默认 3000）
+ *   LOG_LEVEL          日志级别：debug | info | error （默认 info）
+ *   JSON_LIMIT         最大请求体大小（如 "100mb"，默认 50mb）
+ *   DATA_DIR           数据目录，支持绝对路径或相对项目根目录（默认 "data"）
+ *   DEFAULT_DARK       前端默认暗黑模式："true" | "false"
+ *   DEFAULT_AUTO_SAVE  前端默认自动保存："true" | "false"
+ *   DEFAULT_DEBUG      前端默认开启调试输出："true" | "false"
+ *   FONT_URL           供前端动态加载的字体样式链接
+ *
+ * 提示：可在根目录创建 .env 文件来持久化配置；运行 `npm run setup` 会自动生成 .env（第一次使用）。
+ ****/
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');

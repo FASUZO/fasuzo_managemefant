@@ -46,4 +46,19 @@ function setupClock() {
 document.addEventListener('DOMContentLoaded', () => {
   buildNav();
   setupClock();
+
+  /* ---------- 全站字体缩放 ---------- */
+  const ZOOM_KEY = 'siteZoom';
+  const stored = parseInt(localStorage.getItem(ZOOM_KEY) || '100', 10);
+  document.documentElement.style.setProperty('--site-zoom', stored + '%');
+
+  if(!window.setFontScale){
+    window.setFontScale = function(pct){
+      pct = parseInt(pct,10);
+      if(isNaN(pct)) return; pct = Math.max(80, Math.min(150, pct));
+      localStorage.setItem(ZOOM_KEY, pct);
+      document.documentElement.style.setProperty('--site-zoom', pct + '%');
+      console.info('Site zoom set', pct);
+    };
+  }
 }); 

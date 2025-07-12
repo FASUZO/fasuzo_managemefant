@@ -60,13 +60,11 @@ import { logDebug, logInfo } from './debug.js';
   allColumns.forEach(c=>{ if(labelMap[c.key]) c.label = labelMap[c.key]; });
 
   const listEl = document.getElementById('categoryList');
-  const inputEl = document.getElementById('categoryInput');
   const addBtn = document.getElementById('addCategory');
   const exportBtn = document.getElementById('exportData');
   const editDataBtn = document.getElementById('editDataBtn');
   const importInput = document.getElementById('importFile');
   const channelListEl = document.getElementById('channelList');
-  const channelInputEl = document.getElementById('channelInput');
   const addChannelBtn = document.getElementById('addChannel');
   const columnToggleBox = document.getElementById('columnToggles');
   const addColumnBtn = document.getElementById('addColumnBtn');
@@ -74,7 +72,6 @@ import { logDebug, logInfo } from './debug.js';
   const deleteCategoryBtn = document.getElementById('deleteCategoryBtn');
   const deleteChannelBtn = document.getElementById('deleteChannelBtn');
   const tagListEl = document.getElementById('tagList');
-  const tagInputEl = document.getElementById('tagInput');
   const addTagBtn = document.getElementById('addTag');
   const deleteTagBtn = document.getElementById('deleteTagBtn');
   const viewDataBtn = document.getElementById('viewDataBtn');
@@ -96,6 +93,9 @@ import { logDebug, logInfo } from './debug.js';
   let darkToggleEl, autoSaveToggleEl;
 
   function initToggles(){
+    /* 顶部控制栏容器 */
+    const switchBar = document.querySelector('.switch-bar');
+
     darkToggleEl = document.getElementById('darkModeToggle');
     autoSaveToggleEl = document.getElementById('autoSaveToggle');
 
@@ -120,6 +120,130 @@ import { logDebug, logInfo } from './debug.js';
           alert('已开启自动保存，现有修改已同步');
         }
       });
+    }
+
+    /* -------- 使用图标按钮替代开关 -------- */
+    const addIconButton=(icon, title, onClick)=>{
+      const btn=document.createElement('button');
+      btn.className='icon-btn';
+      btn.textContent=icon;
+      btn.title=title;
+      btn.addEventListener('click', onClick);
+      switchBar.appendChild(btn);
+      return btn;
+    };
+
+    /* ---------- 底部浮动保存按钮删除 ---------- */
+    const bottomSave=document.getElementById('saveDataBtn');
+    if(bottomSave) bottomSave.remove();
+
+    /* ---------- 手动保存按钮 ---------- */
+    addIconButton('💾','保存数据',()=>{
+      syncToServer(true);
+      alert('数据已保存！');
+    });
+
+    /* ---------- 自动保存按钮 ---------- */
+    const updateAutoIcon=()=> {
+      const on = autoSaveToggleEl.checked;
+      autoBtn.textContent = on ? '🟢' : '🔴';
+      autoBtn.classList.toggle('active', on);
+    };
+    const autoBtn=addIconButton('', '自动保存', ()=>{
+      autoSaveToggleEl.checked=!autoSaveToggleEl.checked;
+      autoSaveToggleEl.dispatchEvent(new Event('change'));
+      updateAutoIcon();
+    });
+    updateAutoIcon();
+
+    /* ---------- 设置弹窗 ---------- */
+    addIconButton('❓','设置',openSettingsModal);
+
+    function openSettingsModal(){
+      const overlay=document.createElement('div'); overlay.className='overlay';
+      const modal=document.createElement('div'); modal.className='modal'; modal.style.width='300px';
+      const title=document.createElement('h3'); title.textContent='界面设置'; modal.appendChild(title);
+
+      const formWrap=document.createElement('div'); formWrap.style.display='flex'; formWrap.style.flexDirection='column'; formWrap.style.gap='12px';
+
+      // 主宽度
+      const wLabel=document.createElement('label'); wLabel.textContent='主区域宽度(px)';
+      wLabel.style.display='flex'; wLabel.style.alignItems='center'; wLabel.style.justifyContent='space-between';
+      const widthInput=document.createElement('input'); widthInput.type='number'; widthInput.min=600; widthInput.max=2400; widthInput.step=100;
+      widthInput.style.width='100px'; widthInput.style.marginLeft='12px';
+      widthInput.value=parseInt(localStorage.getItem('mainWidth')||'1200',10);
+      wLabel.appendChild(widthInput);
+      formWrap.appendChild(wLabel);
+
+      // 站点缩放
+      const zLabel=document.createElement('label'); zLabel.textContent='字体缩放(%)';
+      zLabel.style.display='flex'; zLabel.style.alignItems='center'; zLabel.style.justifyContent='space-between';
+      const zoomInput=document.createElement('input'); zoomInput.type='number'; zoomInput.min=80; zoomInput.max=150; zoomInput.step=10;
+      zoomInput.style.width='100px'; zoomInput.style.marginLeft='12px';
+      zoomInput.value=parseInt(localStorage.getItem('siteZoom')||'100',10);
+      zLabel.appendChild(zoomInput);
+      formWrap.appendChild(zLabel);
+
+      modal.appendChild(formWrap);
+
+      const actions=document.createElement('div'); actions.className='actions';
+      const okBtn=document.createElement('button'); okBtn.textContent='应用'; okBtn.className='btn-like';
+      const cancelBtn=document.createElement('button'); cancelBtn.textContent='取消'; cancelBtn.className='btn-like btn-danger btn-small';
+
+      okBtn.onclick=()=>{
+        const w=parseInt(widthInput.value,10); const z=parseInt(zoomInput.value,10);
+        if(!isNaN(w)&&w>=600&&w<=2400){ localStorage.setItem('mainWidth',w); document.documentElement.style.setProperty('--main-max-width', w+'px'); }
+        if(!isNaN(z)&&z>=80&&z<=150){ localStorage.setItem('siteZoom',z); document.documentElement.style.setProperty('--site-zoom', z+'%'); }
+        document.body.removeChild(overlay);
+      };
+      cancelBtn.onclick=()=> document.body.removeChild(overlay);
+
+      actions.appendChild(okBtn); actions.appendChild(cancelBtn); modal.appendChild(actions);
+      overlay.appendChild(modal); document.body.appendChild(overlay);
+    }
+
+    /* ---------- 全局函数 ---------- */
+    window.setMainWidth = function(px){
+      px = parseInt(px,10);
+      if(isNaN(px)) return; px = Math.max(600, Math.min(2400, px));
+      localStorage.setItem('mainWidth', px);
+      document.documentElement.style.setProperty('--main-max-width', px+'px');
+      console.info('Main width set to', px);
+    };
+    if(!window.setFontScale){
+      window.setFontScale = function(pct){
+        pct = parseInt(pct,10);
+        if(isNaN(pct)) return; pct = Math.max(80, Math.min(150, pct));
+        localStorage.setItem('siteZoom', pct);
+        document.documentElement.style.setProperty('--site-zoom', pct + '%');
+        console.info('Site zoom set', pct);
+      };
+    }
+
+    // 先移除文字标签，隐藏原开关
+    document.querySelectorAll('.switch-bar .switch-label').forEach(el=>el.remove());
+    document.querySelectorAll('.switch-bar .switch').forEach(el=>el.style.display='none');
+
+    // 暗黑模式按钮（月亮 / 太阳）
+    const updateDarkIcon=()=> darkBtn.textContent = document.body.classList.contains('dark') ? '🌙' : '🌕';
+    const darkBtn = addIconButton('', '暗黑模式', ()=>{
+      darkToggleEl.checked = !darkToggleEl.checked;
+      darkToggleEl.dispatchEvent(new Event('change'));
+      updateDarkIcon();
+    });
+    updateDarkIcon();
+
+    /* -------- 主区域宽度调节 -------- */
+    const MAIN_WIDTH_KEY = 'mainWidth';
+    if(switchBar){
+      const stored = parseInt(localStorage.getItem(MAIN_WIDTH_KEY) || '1200', 10);
+      document.documentElement.style.setProperty('--main-max-width', stored + 'px');
+    }
+    /* -------- 全局字体缩放 -------- */
+    const FONT_SCALE_KEY = 'siteZoom';
+    {
+      const storedScale = parseInt(localStorage.getItem(FONT_SCALE_KEY) || '100', 10);
+      document.documentElement.style.setProperty('--site-zoom', storedScale + '%');
     }
   }
 
@@ -157,10 +281,14 @@ function syncToServer(force = false) {
 //-------------------------------------------------------
   // 保存按钮事件：真正同步到服务器
   const saveBtn = document.getElementById('saveDataBtn');
-  saveBtn.addEventListener('click', ()=>{
-    syncToServer(true);
-    alert('数据已保存！');
-  });
+  if(saveBtn){
+    saveBtn.addEventListener('click', ()=>{
+      syncToServer(true);
+      alert('数据已保存！');
+    });
+  }
+
+  // 字体缩放由 common.js 统一处理，无需本地 zoom 设置
 
   function openDeleteModal(list, onDelete){
     if(list.length===0){ alert('没有可删除项'); return; }

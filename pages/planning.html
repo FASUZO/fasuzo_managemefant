@@ -1,20 +1,42 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>规划</title>
-  <link rel="stylesheet" href="../styles/base.css">
-  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/base.css" />
+  <link rel="stylesheet" href="../styles/main.css" />
 </head>
 <body>
-  <main>
-    <h1>规划页面</h1>
-    <p>这里可以展示规划相关内容。</p>
+  <main class="plan-main">
+    <h1>规划 / 待办清单</h1>
+
+    <!-- 日期横向日历已移除 -->
+
+    <!-- 添加任务 -->
+    <section class="card">
+      <h2>添加待办</h2>
+      <div class="add-todo-form">
+        <input id="todoTitle" type="text" placeholder="待办事项" />
+        <input id="todoDate" type="date" />
+        <button id="addTodoBtn" class="btn-like">添加</button>
+      </div>
+    </section>
+
+    <!-- 任务列表 -->
+    <section class="card long-card">
+      <h2>待办列表</h2>
+      <div id="todoList" class="todo-list"></div>
+    </section>
+
+    <!-- 浮动添加按钮 -->
+    <button id="fabAdd" class="fab">＋</button>
+
   </main>
 
   <nav id="mainNav"></nav>
 
   <script type="module" src="../scripts/common.js"></script>
+  <script type="module" src="../scripts/planning.js"></script>
 </body>
 </html> 

@@ -186,3 +186,29 @@ $ docker compose up -d
 ## License
 
 [MIT](LICENSE) © 2023–Present SUZO
+
+## 配置与调试
+
+### 运行时环境变量（.env）
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| PORT | 3000 | 后端监听端口 |
+| LOG_LEVEL | info | 日志级别：`debug \| info \| error` |
+| JSON_LIMIT | 50mb | 最大 JSON 请求体，含 Base64 图片 |
+| DATA_DIR | data | 数据 & 附件目录 |
+| DEFAULT_DARK | false | 前端默认暗黑模式 |
+| DEFAULT_AUTO_SAVE | false | 前端默认自动保存功能 |
+| DEFAULT_DEBUG | false | 前端默认开启调试输出 |
+| FONT_URL |  | 需动态加载的字体 CSS 链接 |
+
+`npm run setup` 会在首次安装时自动复制 `env.example` → `.env`（若无）。
+
+### 前端调试日志
+在浏览器控制台执行：
+```js
+debug = true;   // 开启详细调试
+debug = false;  // 关闭
+```
+亦可在 `.env` 中设置 `DEFAULT_DEBUG=true` 让前端默认输出。
+
+---
