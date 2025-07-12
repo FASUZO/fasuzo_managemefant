@@ -29,6 +29,9 @@
   - [常见问题](#常见问题)
   - [未来计划](#未来计划)
   - [License](#license)
+  - [配置与调试](#配置与调试)
+    - [运行时环境变量（.env）](#运行时环境变量env)
+    - [前端调试日志](#前端调试日志)
 
 ---
 
@@ -95,8 +98,8 @@ suzo_management/
 
 ```bash
 # 1. 克隆仓库
-$ git clone https://github.com/FASUZO/suzo_management.git
-$ cd suzo_management
+$ git clone git@github.com:FASUZO/fasuzo_managemefant.git
+$ cd fasuzo_managemefant
 
 # 2. 安装依赖
 $ npm i

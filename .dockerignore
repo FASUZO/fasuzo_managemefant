@@ -1,4 +1,8 @@
-node_modules
-*.log
+/node_modules
+/*.log
 data.json
 .DS_Store
+# 不需要复制本地构建产物，始终在容器内构建
+/dist
+# 排除 git 相关
+.git
