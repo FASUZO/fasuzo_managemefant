@@ -3,6 +3,12 @@
 
 import { logDebug, logInfo } from './debug.js';
 
+// ---------- SVG Icons ----------
+const ICON_SHOW = `<svg viewBox="0 0 1365 1024" width="20" height="20"><path d="M1294.784853 471.466667C1153.13152 157.866667 938.944853 0 651.712853 0 364.480853 0 150.464853 157.866667 8.726187 471.637333a98.986667 98.986667 0 0 0 0 80.896C150.37952 866.133333 364.566187 1024 651.712853 1024c287.317333 0 501.333333-157.866667 643.072-471.637333a98.986667 98.986667 0 0 0 0-80.896z m-643.072 439.466666c-241.066667 0-417.536-128.512-542.122666-398.933333 124.586667-270.506667 301.056-398.933333 542.122666-398.933333 241.152 0 417.621333 128.512 542.122667 398.933333-124.330667 270.506667-300.885333 398.933333-542.122667 398.933333z m-5.973333-675.328C500.502187 235.52 382.742187 359.253333 382.742187 512s117.76 276.48 262.997333 276.48C791.14752 788.48 908.90752 664.576 908.90752 512c0-152.661333-117.76-276.48-263.082667-276.48z m0 452.266667C553.238187 687.872 478.400853 609.28 478.400853 512c0-97.28 74.837333-175.872 167.338667-175.872 92.586667 0 167.424 78.677333 167.424 175.872 0 97.28-74.837333 175.872-167.424 175.872z" fill="#666666"></path></svg>`;
+const ICON_HIDE = `<svg viewBox="0 0 1102 1024" width="20" height="20"><path d="M1095.510609 500.629845l-0.146273-0.146273-0.146273-0.146273c-46.075952-101.805913-101.147685-184.157535-165.288335-246.98173l-64.067514 67.43179c55.218006 53.389595 103.049232 124.478207 144.225043 213.704653-105.316461 228.770758-254.661055 337.451495-458.784836 337.451496-64.872015 0-124.331934-11.043601-178.526029-33.350213l-69.187064 72.624477c74.014069 37.445853 156.438827 56.315052 247.713093 56.315052 243.105499 0 424.191303-133.473988 544.061915-398.812962 9.727145-21.502111 9.727145-46.441634 0.146273-68.090017zM1014.548579 59.470889l-53.609004-56.315052a9.800282 9.800282 0 0 0-14.334741 0l-147.735592 155.049235c-73.794659-37.665262-156.219418-56.534462-247.566821-56.534462C308.270059 101.743747 127.257391 235.144598 7.313643 500.483572c-9.727145 21.648384-9.727145 46.880453 0 68.528836 46.075952 101.879049 101.147685 184.157535 165.288336 247.128003L45.271451 949.614398a11.043601 11.043601 0 0 0 0 14.992969l53.609005 56.315052a9.800282 9.800282 0 0 0 14.261604 0L1014.548579 74.317585a10.897328 10.897328 0 0 0 0-14.846696zM408.247561 568.35418a156.438827 156.438827 0 0 1-3.656821-33.715895c0-82.205349 63.409286-148.759502 141.665268-148.759501 10.970465 0 21.940929 1.316456 32.180029 3.87623L408.247561 568.35418z m233.305217-245.007045a213.924062 213.924062 0 0 0-95.29677-22.452885c-122.869205 0-222.554161 104.585097-222.554162 233.744035 0 35.836851 7.679325 69.699019 21.355838 100.123775l-108.241919 113.654015c-55.218006-53.389595-103.122369-124.40507-144.298179-213.704653C197.98032 305.940664 347.39805 197.333063 551.302421 197.333063c64.872015 0 124.331934 10.970465 178.599166 33.350213L641.625914 323.347135zM546.329144 683.324651c-8.045007 0-16.090015-0.658228-23.76934-2.120957l-64.579469 67.870609c27.06048 12.360057 57.046417 19.088609 88.348809 19.088608 122.869205 0 222.554161-104.585097 222.554161-233.670899 0-32.911394-6.436006-64.36006-18.210971-92.883268l-64.579469 67.943745c1.243319 8.045007 1.974684 16.455697 1.974683 24.866387-0.073136 82.424758-63.482423 148.905775-141.738404 148.905775z" fill="#666666"></path></svg>`;
+
+const ICON_HANDLE = `<svg viewBox="0 0 1106 1024" width="20" height="20"><path d="M1021.238317 0.001202a84.160991 84.160991 0 0 1 84.581796 84.581796v64.383158a84.160991 84.160991 0 0 1-84.581796 84.581796H84.586605A84.160991 84.160991 0 0 1 0.004809 148.966156V84.582998A84.160991 84.160991 0 0 1 84.586605 0.001202z m0 395.195967a84.160991 84.160991 0 0 1 84.581796 84.581796v64.383158a84.160991 84.160991 0 0 1-84.581796 84.64191H84.586605A84.160991 84.160991 0 0 1 0.004809 544.222238V479.83908a84.160991 84.160991 0 0 1 84.581796-84.581796z m0 395.195967a84.160991 84.160991 0 0 1 84.581796 84.581795v64.383158a84.160991 84.160991 0 0 1-84.581796 84.581796H84.586605A84.160991 84.160991 0 0 1 0.004809 939.358089v-64.383158a84.160991 84.160991 0 0 1 84.581796-84.581795z" fill="#1D85ED"></path></svg>`;
+// ... existing code ...
 (async function() {
   // 读取运行时配置
   let envCfg = {};
@@ -35,7 +41,8 @@ import { logDebug, logInfo } from './debug.js';
     { key:'date', label:'时间' },
     { key:'channel', label:'购入渠道' },
     { key:'image', label:'附件' },
-    { key:'note', label:'备注' }
+    { key:'note', label:'备注' },
+    { key:'action', label:'操作' } // 新增：操作列
   ];
 
   // 从服务器拉取数据
@@ -53,7 +60,10 @@ import { logDebug, logInfo } from './debug.js';
     assetsCache = d.assets || [];
     hiddenColumns = d.hiddenColumns || [];
     if(Array.isArray(d.columns) && d.columns.length){ allColumns = d.columns; }
+    if(!allColumns.find(c=>c.key==='action')) allColumns.push({key:'action', label:'操作'});
     columnOrder = Array.isArray(d.columnOrder) && d.columnOrder.length ? d.columnOrder : allColumns.map(c=>c.key);
+    // 若缺少操作列，补充到末尾
+    if(!columnOrder.includes('action')) columnOrder.push('action');
   });
 
   const labelMap = { name:'名称', category:'分类', subcategory:'标签' };
@@ -117,7 +127,7 @@ import { logDebug, logInfo } from './debug.js';
         logInfo('AutoSave toggled', autoSaveEnabled);
         if(autoSaveEnabled && pendingChanges){
           syncToServer(true);
-          alert('已开启自动保存，现有修改已同步');
+          window.showToast('已开启自动保存，现有修改已同步');
         }
       });
     }
@@ -133,6 +143,13 @@ import { logDebug, logInfo } from './debug.js';
       return btn;
     };
 
+    /* ---------- 折叠 / 展开按钮 (放在首位) ---------- */
+    const toggleBtn = addIconButton('⏴','折叠/展开',()=>{
+      const collapsed = switchBar.classList.toggle('collapsed');
+      toggleBtn.textContent = collapsed ? '⏵' : '⏴';
+    });
+    toggleBtn.classList.add('toggle-btn');
+
     /* ---------- 底部浮动保存按钮删除 ---------- */
     const bottomSave=document.getElementById('saveDataBtn');
     if(bottomSave) bottomSave.remove();
@@ -140,7 +157,7 @@ import { logDebug, logInfo } from './debug.js';
     /* ---------- 手动保存按钮 ---------- */
     addIconButton('💾','保存数据',()=>{
       syncToServer(true);
-      alert('数据已保存！');
+      window.showToast('数据已保存！');
     });
 
     /* ---------- 自动保存按钮 ---------- */
@@ -284,7 +301,7 @@ function syncToServer(force = false) {
   if(saveBtn){
     saveBtn.addEventListener('click', ()=>{
       syncToServer(true);
-      alert('数据已保存！');
+      window.showToast('数据已保存！');
     });
   }
 
@@ -564,62 +581,44 @@ function syncToServer(force = false) {
       wrapper.style.alignItems = 'center';
       wrapper.style.marginBottom = '6px';
 
-      const upBtn = document.createElement('button');
-      upBtn.textContent = '↑';
-      upBtn.style.display = 'inline-block';
-      upBtn.style.visibility = idx===0 ? 'hidden' : 'visible';
-      upBtn.style.width = '24px';
-      upBtn.style.height = '24px';
-      upBtn.style.display = 'inline-flex';
-      upBtn.style.justifyContent = 'center';
-      upBtn.style.alignItems = 'center';
-      upBtn.style.marginRight = '4px';
-      upBtn.addEventListener('click', ()=>{
-        if(idx===0) return;
-        [columnOrder[idx-1], columnOrder[idx]] = [columnOrder[idx], columnOrder[idx-1]];
-        syncToServer();
-        renderColumnToggles();
-      });
+      // 拖拽手柄
+      const handle = document.createElement('span');
+      handle.innerHTML = ICON_HANDLE;
+      handle.classList.add('drag-handle'); // 添加类名
+      handle.style.cursor = 'grab';
+      handle.style.userSelect = 'none';
+      handle.style.marginRight = '6px';
 
-      const downBtn = document.createElement('button');
-      downBtn.textContent = '↓';
-      downBtn.style.display = 'inline-block';
-      downBtn.style.visibility = idx===columnOrder.length-1 ? 'hidden' : 'visible';
-      downBtn.style.width = '24px';
-      downBtn.style.height = '24px';
-      downBtn.style.display = 'inline-flex';
-      downBtn.style.justifyContent = 'center';
-      downBtn.style.alignItems = 'center';
-      downBtn.style.marginRight = '4px';
-      downBtn.addEventListener('click', ()=>{
-        if(idx===columnOrder.length-1) return;
-        [columnOrder[idx+1], columnOrder[idx]] = [columnOrder[idx], columnOrder[idx+1]];
-        syncToServer();
-        renderColumnToggles();
-      });
+      // 可见性切换图标
+      const eye = document.createElement('span');
+      const updateEye=()=>{ eye.innerHTML = cb.checked ? ICON_SHOW : ICON_HIDE; };
 
-      const label = document.createElement('label');
-      label.style.display = 'inline-flex';
-      label.style.alignItems = 'center';
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.value = col.key;
       cb.checked = !hiddenColumns.includes(col.key);
-      cb.style.display = 'inline-block';
+      cb.style.display='none';
       cb.addEventListener('change', ()=>{
         if(cb.checked){
           hiddenColumns = hiddenColumns.filter(k=>k!==col.key);
         }else{
           if(!hiddenColumns.includes(col.key)) hiddenColumns.push(col.key);
         }
+        updateEye();
         syncToServer();
       });
-      label.appendChild(cb);
-      label.appendChild(document.createTextNode(' '+col.label));
 
-      wrapper.appendChild(upBtn);
-      wrapper.appendChild(downBtn);
-      wrapper.appendChild(label);
+      eye.style.cursor='pointer'; eye.style.marginRight='6px';
+      eye.addEventListener('click', ()=>{ cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); });
+      updateEye();
+
+      const labelTxt=document.createElement('span'); labelTxt.textContent=col.label;
+      labelTxt.style.userSelect='none';
+
+      wrapper.appendChild(handle);
+      wrapper.appendChild(eye);
+      wrapper.appendChild(cb);
+      wrapper.appendChild(labelTxt);
 
       // 宽度输入框
       const widthInp=document.createElement('input');
@@ -635,6 +634,10 @@ function syncToServer(force = false) {
         syncToServer();
       });
       wrapper.appendChild(widthInp);
+
+      // 拖拽排序功能
+      wrapper.dataset.index = idx;
+      attachDrag(wrapper, columnOrder, renderColumnToggles);
 
       columnToggleBox.appendChild(wrapper);
     });
@@ -706,20 +709,62 @@ function syncToServer(force = false) {
   // 拖拽排序
   function attachDrag(li, arr, renderFn){
     li.draggable = true;
-    li.addEventListener('dragstart', e=>{
-      e.dataTransfer.setData('text/plain', li.dataset.index);
-      e.dataTransfer.effectAllowed = 'move';
+
+    /* -------- 条件：列管理需要手柄，其余直接允许 -------- */
+    const needHandle = !!li.querySelector('.column-width-input');
+    let allowDrag = !needHandle;
+
+    li.addEventListener('mousedown', (e)=>{
+      if(!needHandle) return;
+      allowDrag = !!e.target.closest('.drag-handle');
     });
-    li.addEventListener('dragover', e=>{ e.preventDefault(); });
-    li.addEventListener('drop', e=>{
+
+    function ensureContainerSetup(container){
+      if(!container) return;
+      if(!container._commonDragover){
+        container.addEventListener('dragover', (evt)=>{
+          evt.preventDefault();
+          if(evt.dataTransfer) evt.dataTransfer.dropEffect='move';
+        });
+        container._commonDragover = true;
+      }
+    }
+
+    // 记录当前拖动源索引
+    let dragIndex = -1;
+
+    li.addEventListener('dragstart', (e)=>{
+      if(!allowDrag){ e.preventDefault(); return; }
+      const container = li.parentElement;
+      if(!container) return;
+      ensureContainerSetup(container);
+      dragIndex = parseInt(li.dataset.index,10);
+      container._dragIndex = dragIndex;
+      document.body.classList.add('dragging-column');
+      li.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain', '');
+    });
+
+    // 占位：仅阻止默认行为以保证后续 drop 可触发
+    li.addEventListener('dragenter', (e)=>{ e.preventDefault(); });
+
+    li.addEventListener('drop', (e)=>{
       e.preventDefault();
-      const from = parseInt(e.dataTransfer.getData('text/plain'),10);
+      const container = li.parentElement;
+      if(!container) return;
+      const from = container._dragIndex;
       const to = parseInt(li.dataset.index,10);
-      if(isNaN(from) || isNaN(to) || from===to) return;
+      if(isNaN(from)||isNaN(to)||from===to) return;
       const item = arr.splice(from,1)[0];
       arr.splice(to,0,item);
       renderFn();
       syncToServer();
+    });
+
+    li.addEventListener('dragend', ()=>{
+      document.body.classList.remove('dragging-column');
+      li.classList.remove('dragging');
     });
   }
 

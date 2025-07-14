@@ -29,7 +29,21 @@ const DATA_DIR_ENV= process.env.DATA_DIR    || 'data';   // 绝对路径或相�
 const DEFAULT_DARK        = process.env.DEFAULT_DARK   === 'true';
 const DEFAULT_AUTO_SAVE   = process.env.DEFAULT_AUTO_SAVE === 'true';
 const DEFAULT_DEBUG_FRONT = process.env.DEFAULT_DEBUG  === 'true';
-const FONT_URL            = process.env.FONT_URL || '';
+let FONT_URL            = process.env.FONT_URL || '';
+
+// 若设置了 FONT_URL，但文件不存在，则自动禁用
+if(FONT_URL){
+  try{
+    // 仅处理相对路径，以 / 或 ./ 开头的情况；远程 URL 不作校验
+    if(!/^https?:\/\//i.test(FONT_URL)){
+      const abs = path.isAbsolute(FONT_URL) ? FONT_URL : path.join(ROOT_DIR, FONT_URL.replace(/^\//,''));
+      if(!fs.existsSync(abs)){
+        logger.info('FONT_URL 指向的文件不存在，已忽略:', FONT_URL);
+        FONT_URL = '';
+      }
+    }
+  }catch(e){ FONT_URL=''; }
+}
 
 // 简易日志封装
 const logger = {

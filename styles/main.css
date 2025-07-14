@@ -331,6 +331,10 @@ td.action-cell .btn-like{ margin:0 2px; }
 
 /* 居中操作列 */
 td.action-cell, th.action-cell{ text-align:center; }
+/* 操作列按钮居中并去除底部空隙 */
+td.action-cell{ display:flex; align-items:center; justify-content:center; gap:8px; padding:4px 0; }
+td.action-cell .icon-btn{ line-height:0; padding:4px; }
+td.action-cell .icon-btn svg{ display:block; }
 
 /* 模态框分区美化 */
 .modal-section{
@@ -483,6 +487,11 @@ select, input, button {
 
 /* 拖拽排序光标提示 */
 li[draggable="true"] { cursor: grab; } 
+li[draggable="true"] { user-select:none; cursor:move; }
+/* --- 列管理拖拽状态 --- */
+body.dragging-column{ cursor: grabbing !important; }
+body.dragging-column *{ cursor: grabbing !important; }
+li.dragging{ opacity: 0.5; }
 
 /* -------------- 暗黑模式 -------------- */
 body.dark {
@@ -524,10 +533,14 @@ input:checked+.slider:before{transform:translateX(22px);}
 .switch-bar .switch-label{display:none !important;}
 
 /* 顶部栏图标按钮 */
-.icon-btn{background:transparent;border:none;width:24px;height:24px;font-size:18px;line-height:1;cursor:pointer;color:inherit;padding:0;display:flex;align-items:center;justify-content:center;}
+.icon-btn{background:transparent;border:none;width:24px;height:24px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .icon-btn.active{color:var(--primary-color);} 
 body.dark .icon-btn{color:#ddd;} 
 body.dark .icon-btn.active{color:var(--primary-color);} 
+/* 折叠模式：仅显示 toggle-btn */
+.switch-bar.collapsed{ width:28px; }
+.switch-bar.collapsed .icon-btn:not(.toggle-btn){ display:none; }
+.toggle-btn{ cursor:pointer; }
 
 /* 顶部栏间距统一 */
 .switch-bar{gap:12px;}
@@ -748,3 +761,8 @@ body.dark .todo-row{border-color:#444;}
 
 .fab{position:fixed;right:20px;bottom:80px;width:56px;height:56px;border-radius:50%;background:var(--primary-color);color:#fff;border:none;font-size:32px;line-height:56px;text-align:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3);z-index:1100;}
 .fab:hover{background:#115293;}
+
+/* ---- Toast 提示 ---- */
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,0.8);color:#fff;padding:8px 18px;border-radius:4px;font-size:14px;opacity:0;transition:opacity .3s, transform .3s;z-index:1400;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.dark{background:rgba(255,255,255,0.85);color:#111;}

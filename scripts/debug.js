@@ -39,4 +39,40 @@ export const logDebug = (...args) => { if (DEBUG) console.debug('%c[DEBUG]', 'co
 window.logInfo = logInfo;
 window.logDebug = logDebug;
 
-export { DEBUG }; 
+export { DEBUG };
+
+/**
+ * 启用光标状态调试：
+ *   1. 监听 `mousemove`，实时检查所在元素的 `cursor` 计算样式。
+ *   2. 当光标样式发生变化时打印日志（仅在 debug=true 时输出）。
+ *   3. 返回一个关闭函数，调用后停止监听。
+ *
+ * 使用示例：
+ *   import { enableCursorDebug } from './debug.js';
+ *   const stop = enableCursorDebug();
+ *   // ... 调试结束后
+ *   stop();
+ */
+export function enableCursorDebug(){
+  let lastCursor='';
+  const handler=(e)=>{
+    // 获取当前鼠标下元素的光标样式
+    const cur = getComputedStyle(e.target).cursor || 'auto';
+    if(cur!==lastCursor){
+      lastCursor=cur;
+      if(DEBUG){
+        console.debug('%c[CURSOR]', 'color:#ff5722', cur, e.target);
+      }
+    }
+  };
+  document.addEventListener('mousemove', handler, { passive:true });
+  console.log('%c[DEBUG] 光标状态调试已启用', 'color:#ff5722');
+  const stop=()=>{
+    document.removeEventListener('mousemove', handler);
+    console.log('%c[DEBUG] 光标状态调试已关闭', 'color:#ff5722');
+  };
+  return stop;
+}
+
+// 同步到 window 方便在控制台快速启用/关闭
+window.enableCursorDebug = enableCursorDebug; 

@@ -61,4 +61,21 @@ document.addEventListener('DOMContentLoaded', () => {
       console.info('Site zoom set', pct);
     };
   }
-}); 
+});
+
+/* -------- 轻量级全局提示 -------- */
+if(!window.showToast){
+  window.showToast = function(msg,duration=2000){
+    const el=document.createElement('div');
+    el.className='toast';
+    if(document.body.classList.contains('dark')) el.classList.add('dark');
+    el.textContent=msg;
+    document.body.appendChild(el);
+    // 触发过渡
+    requestAnimationFrame(()=> el.classList.add('show'));
+    setTimeout(()=>{
+      el.classList.remove('show');
+      setTimeout(()=> el.remove(),300);
+    }, duration);
+  };
+} 

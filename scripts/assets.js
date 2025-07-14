@@ -8,6 +8,12 @@ import { logInfo, logDebug } from './debug.js';
     if(r.ok) envCfg = await r.json();
   } catch(e) { console.warn('无法获取 /api/env', e); }
 
+  /* ---------- SVG Icons (global) ---------- */
+  if(typeof ICON_EDIT==='undefined'){
+    var ICON_EDIT = `<svg viewBox="0 0 1024 1024" width="24" height="24"><path d="M252.3 743.3l235.8-42.4-147.8-179.1zM365.2 501.4l148.2 178.8L868.3 389 720.2 210.2zM958 259.7l-92.6-111.9c-15.1-18.4-43.7-20.3-63.7-4.2l-53.9 44 148.1 179.1 53.9-44c19.6-16.1 23.3-44.6 8.2-63z" fill="#2867CE"></path><path d="M770.1 893.7H259.6c-93.1 0-168.5-75.5-168.5-168.5V345.4c0-93.1 75.5-168.5 168.5-168.5h49.6c26.6 0 48.1 21.5 48.1 48.1s-21.5 48.1-48.1 48.1h-49.6c-40 0-72.4 32.4-72.4 72.4v379.8c0 40 32.4 72.4 72.4 72.4h510.5c40 0 72.4-32.4 72.4-72.4v-132c0-26.6 21.5-48.1 48.1-48.1s48.1 21.5 48.1 48.1v132c-0.1 93-75.5 168.4-168.6 168.4z" fill="#BDD2EF"></path></svg>`;
+    var ICON_VIEW = `<svg viewBox="0 0 1024 1024" width="20" height="20"><path d="M743.367111 544.711111a227.555556 227.555556 0 0 1 179.996445 366.762667l62.805333 62.862222a28.444444 28.444444 0 0 1-40.277333 40.220444l-62.691556-62.748444a227.555556 227.555556 0 1 1-139.832889-407.096889z m15.075556-516.323555A151.722667 151.722667 0 0 1 910.222222 180.110222l-1.820444 360.448a284.444444 284.444444 0 0 0-342.584889 453.973334l-356.522667-0.113778A151.722667 151.722667 0 0 1 57.457778 842.752V180.110222A151.722667 151.722667 0 0 1 209.237333 28.387556h549.205334z m-102.456889 600.120888c-52.167111 17.066667-94.890667 83.512889-94.890667 137.784889 0 61.952 50.801778 131.242667 112.412445 133.233778-40.504889-27.192889-67.356444-89.770667-67.356445-137.614222 0-49.152 13.710222-109.397333 49.834667-133.404445zM361.528889 682.666667H198.371556a28.444444 28.444444 0 0 0-5.12 56.433777l5.12 0.455112h163.157333a28.444444 28.444444 0 1 0 0-56.888889zM475.591111 455.111111H198.371556a28.444444 28.444444 0 0 0-5.12 56.433778l5.12 0.455111H475.591111a28.444444 28.444444 0 1 0 0-56.888889z m292.408889-227.555555H198.371556a28.444444 28.444444 0 0 0-5.12 56.433777l5.12 0.455111H768a28.444444 28.444444 0 1 0 0-56.888888z" fill="#8598C4"></path></svg>`;
+  }
+
   // 应用默认主题 / 自动保存 / 调试开关
   if(localStorage.getItem('autoSave') === null && typeof envCfg.defaultAutoSave === 'boolean'){
     localStorage.setItem('autoSave', envCfg.defaultAutoSave);
@@ -24,7 +30,7 @@ import { logInfo, logDebug } from './debug.js';
   logDebug('加载 serverData', serverData);
 
   // 检测自动保存偏好
-  const autoSaveEnabled = localStorage.getItem('autoSave') === 'true';
+  let autoSaveEnabled = localStorage.getItem('autoSave') === 'true';
   logInfo('AutoSave status (assets page):', autoSaveEnabled);
 
   let autoSaveTimer = null;
@@ -71,7 +77,7 @@ import { logInfo, logDebug } from './debug.js';
     { key:'image', label:'附件' },
     { key:'note', label:'备注' }
   ];
-  const labelMap = { name:'名称', category:'分类', subcategory:'标签' };
+  const labelMap = { name:'名称', category:'分类', subcategory:'标签', action:'操作' };
   columnsMeta.forEach(c=>{ if(labelMap[c.key]) c.label = labelMap[c.key]; });
   const columnOrder = Array.isArray(serverData.columnOrder) && serverData.columnOrder.length ? serverData.columnOrder : columnsMeta.map(c=>c.key);
 
@@ -105,6 +111,8 @@ import { logInfo, logDebug } from './debug.js';
   const tableBody = document.querySelector('#assetsTable tbody');
 
   const columnLabels = {}; columnsMeta.forEach(c=>{ columnLabels[c.key]=c.label; });
+  // 保证 action 列标签
+  if(!columnLabels['action']) columnLabels['action'] = '操作';
 
   // 重新构建表头（在列标签确定之后）
   const headerTr = document.querySelector('#assetsTable thead tr');
@@ -116,6 +124,7 @@ import { logInfo, logDebug } from './debug.js';
     if(key==='note') th.classList.add('note-col');
     if(key==='date') th.classList.add('date-col');
     if(key==='subcategory') th.classList.add('tag-col');
+    if(key==='action') th.classList.add('action-cell');
     // 应用初始宽度
     const colDef = columnsMeta.find(c=>c.key===key) || {};
     if(colDef.width){ th.style.width = colDef.width + 'px'; }
@@ -149,16 +158,22 @@ import { logInfo, logDebug } from './debug.js';
     });
     headerTr.appendChild(th);
   });
-  // 新增"操作"列
-  const actionTh = document.createElement('th');
-  actionTh.textContent = '操作';
-  actionTh.classList.add('action-cell');
-  headerTr.appendChild(actionTh);
+  // 若 columnOrder 未包含 action，则在末尾添加默认 "操作" 列
+  if(!columnOrder.includes('action')){
+    const actionTh = document.createElement('th');
+    actionTh.textContent = '操作';
+    actionTh.classList.add('action-cell');
+    headerTr.appendChild(actionTh);
+  }
 
   // 用于索引映射
   let idxMap = {};
   function updateIdxMap(){ idxMap = {}; columnOrder.forEach((k,i)=> idxMap[k]=i); }
   updateIdxMap();
+
+  /* ---------- 表格排序状态 ---------- */
+  // 先声明变量，避免后续函数提前访问时报 TDZ
+  let sortStatus = {};
 
   // 渲染已有数据
   if (storedData.length) {
@@ -169,6 +184,8 @@ import { logInfo, logDebug } from './debug.js';
 
   // 初次应用列宽
   applyColumnWidths();
+
+  // 渲染结束后，如存在排序偏好则应用（需在排序函数定义完后调用，见下方）
 
   // 创建行，可传入数据进行填充
   function createRow(prefill = {}) {
@@ -352,6 +369,12 @@ import { logInfo, logDebug } from './debug.js';
       }
     };
 
+    // ------ 操作列单元格提前创建，供后续循环引用 ------
+    const actionTd = document.createElement('td'); actionTd.style.display='flex'; actionTd.style.gap='8px'; actionTd.style.alignItems='center'; actionTd.style.justifyContent='center';
+    const editBtn = document.createElement('button'); editBtn.innerHTML=ICON_EDIT; editBtn.title='编辑'; editBtn.className='icon-btn';
+    const viewBtn = document.createElement('button'); viewBtn.innerHTML=ICON_VIEW; viewBtn.title='查看'; viewBtn.className='icon-btn'; viewBtn.style.marginLeft='6px';
+    actionTd.appendChild(editBtn); actionTd.appendChild(viewBtn);
+
     const getCellByKey = (key)=>{
        if(specialFactories[key]) return specialFactories[key]();
        const colDef = columnsMeta.find(c=>c.key===key) || {type:'text'};
@@ -375,18 +398,16 @@ import { logInfo, logDebug } from './debug.js';
        return td;
     };
 
-    columnOrder.forEach(key=>{ const cell=getCellByKey(key); if(cell) tr.appendChild(cell); });
+    columnOrder.forEach(key=>{
+      const cell = (key==='action') ? actionTd : getCellByKey(key);
+      if(cell) tr.appendChild(cell);
+    });
 
     // 应用列宽到新行
     applyColumnWidths();
 
-    // 操作列
-    const actionTd = document.createElement('td');
-    actionTd.className = 'action-cell';
-    const editBtn = document.createElement('button'); editBtn.textContent='编辑'; editBtn.className='btn-like btn-small';
-    const viewBtn = document.createElement('button'); viewBtn.textContent='查看'; viewBtn.className='btn-like btn-small'; viewBtn.style.marginLeft='6px';
-    actionTd.appendChild(editBtn); actionTd.appendChild(viewBtn);
-    tr.appendChild(actionTd);
+    // 若 columnOrder 未含 action，追加到末尾
+    if(!columnOrder.includes('action')) tr.appendChild(actionTd);
 
     editBtn.addEventListener('click', ()=> openAssetModal(tr,false));
     viewBtn.addEventListener('click', ()=> openAssetModal(tr,true));
@@ -464,21 +485,51 @@ import { logInfo, logDebug } from './debug.js';
       .filter(item => item.name);
   }
 
-  // 列排序
+  // ----------- 列排序（带持久化） -----------
+  // 读取本地排序偏好 { key: 'columnKey', asc: true/false }
+  sortStatus = (()=>{
+    try{ return JSON.parse(localStorage.getItem('assetSort')||'{}'); }
+    catch(e){ return {}; }
+  })();
+
+  // 根据列索引执行排序
+  function sortRowsByIdx(idx, asc=true){
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+    rows.sort((a,b)=>{
+      const aVal = getCellValue(a, idx);
+      const bVal = getCellValue(b, idx);
+      const cmp = isNaN(aVal) || isNaN(bVal) ? aVal.localeCompare(bVal) : Number(aVal) - Number(bVal);
+      return asc ? cmp : -cmp;
+    });
+    tableBody.innerHTML = '';
+    rows.forEach(r=>tableBody.appendChild(r));
+    // 排序可能改变首行内容影响列自动宽度，重新计算一次
+    applyColumnWidths();
+  }
+
+  // 应用已保存的排序（在渲染完行后调用）
+  function applyStoredSorting(){
+    if(!sortStatus.key) return;
+    const idx = idxMap[sortStatus.key];
+    if(idx === undefined) return;
+    sortRowsByIdx(idx, sortStatus.asc);
+  }
+
+  // 绑定表头点击事件，更新排序并写入 localStorage（忽略无效列如“操作”列）
   headerTr.querySelectorAll('th').forEach((th, index)=>{
-    let asc=true;
+    const colKey = columnOrder[index];
+    if(!colKey) return; // 跳过非数据列
     th.addEventListener('click', ()=>{
       if(window.__colResizing) return;
-      const rows=Array.from(tableBody.querySelectorAll('tr'));
-      rows.sort((a,b)=>{
-        const aVal=getCellValue(a,index);
-        const bVal=getCellValue(b,index);
-        const cmp=isNaN(aVal) || isNaN(bVal) ? aVal.localeCompare(bVal) : Number(aVal)-Number(bVal);
-        return asc?cmp:-cmp;
-      });
-      tableBody.innerHTML=''; rows.forEach(r=>tableBody.appendChild(r)); asc=!asc;
+      const newAsc = (sortStatus.key === colKey) ? !sortStatus.asc : true; // 同列则翻转，否则默认升序
+      sortRowsByIdx(index, newAsc);
+      sortStatus = { key: colKey, asc: newAsc };
+      localStorage.setItem('assetSort', JSON.stringify(sortStatus));
     });
   });
+
+  // 调用一次以应用初始排序
+  applyStoredSorting();
 
   function getCellValue(row, idx) {
     const el = row.cells[idx].querySelector('input, select');
@@ -506,7 +557,7 @@ import { logInfo, logDebug } from './debug.js';
       method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
     })
     .then(r=>r.json()).then(()=>{
-       if(showAlert) alert('数据已保存！');
+       if(showAlert) window.showToast('数据已保存！');
        // 自动保存完成后，同步服务器数据，避免重复上传 base64 图片
        if(!showAlert){
          fetch('/api/data')
@@ -531,8 +582,14 @@ import { logInfo, logDebug } from './debug.js';
                tr.dataset.extra = JSON.stringify(extra);
                // 更新单元格展示
                const imgEl = tr.querySelector('td img');
-               const ph = tr.querySelector('td span');
-               if(imgEl){ imgEl.src = url; imgEl.style.display='block'; if(ph) ph.style.display='none'; }
+               if(imgEl){
+                  // 只影响同一图片单元格内的占位符，避免误隐藏其他列的 span（如标签 chip）
+                  imgEl.src = url;
+                  imgEl.style.display='block';
+                  const imgTd = imgEl.closest('td');
+                  const ph = imgTd ? imgTd.querySelector('span') : null;
+                  if(ph) ph.style.display='none';
+               }
             }
           }
         }catch(e){}
@@ -540,7 +597,8 @@ import { logInfo, logDebug } from './debug.js';
   }
 
   const saveBtn = document.getElementById('saveDataBtn');
-  saveBtn.addEventListener('click', ()=> saveTableToServer(true));
+  if(saveBtn){ saveBtn.remove(); }
+  // 顶部图标栏已包含保存按钮
 
   // 处理隐藏列
   const hiddenColumns = serverData.hiddenColumns || [];
@@ -841,6 +899,74 @@ import { logInfo, logDebug } from './debug.js';
       const wrapW = wrapper.clientWidth;
       if(hasCustom && total > wrapW){ assetsTable.style.minWidth = total + 'px'; }
       else{ assetsTable.style.minWidth = ''; }
+    }
+  }
+
+  /* ---------- 顶部图标按钮栏 ---------- */
+  initTopBar();
+
+  function initTopBar(){
+    /* 创建/获取 switch-bar 容器 */
+    let switchBar = document.querySelector('.switch-bar');
+    if(!switchBar){ switchBar=document.createElement('div'); switchBar.className='switch-bar'; document.body.appendChild(switchBar); }
+
+    const addIconButton=(icon,title,onClick)=>{
+      const btn=document.createElement('button'); btn.className='icon-btn'; btn.textContent=icon; btn.title=title; btn.addEventListener('click', onClick); switchBar.appendChild(btn); return btn;
+    };
+
+    /* 折叠/展开按钮 */
+    const toggleBtn=addIconButton('⏴','折叠/展开',()=>{
+      const collapsed = switchBar.classList.toggle('collapsed');
+      toggleBtn.textContent = collapsed ? '⏵' : '⏴';
+    });
+    toggleBtn.classList.add('toggle-btn');
+
+    /* 保存按钮 */
+    addIconButton('💾','保存数据',()=>{ saveTableToServer(true); });
+
+    /* 自动保存按钮 */
+    const autoBtn=addIconButton('', '自动保存开关', ()=>{
+      autoSaveEnabled = !autoSaveEnabled;
+      localStorage.setItem('autoSave', autoSaveEnabled);
+      updateAutoIcon();
+      logInfo('AutoSave toggled (assets page)', autoSaveEnabled);
+    });
+    function updateAutoIcon(){ autoBtn.textContent = autoSaveEnabled ? '🟢' : '🔴'; autoBtn.classList.toggle('active', autoSaveEnabled); }
+    updateAutoIcon();
+
+    /* 暗黑模式切换 */
+    const isDark = document.body.classList.contains('dark');
+    let dark = isDark;
+    const darkBtn=addIconButton(isDark ? '🌙':'🌕','暗黑模式',()=>{
+      dark = !dark; document.body.classList.toggle('dark', dark); localStorage.setItem('theme', dark ? 'dark':'light'); darkBtn.textContent = dark ? '🌙' : '🌕';
+    });
+
+    /* 设置弹窗 / 站点调整 */
+    addIconButton('❓','设置',openSettingsModal);
+
+    function openSettingsModal(){
+      const overlay=document.createElement('div'); overlay.className='overlay';
+      const modal=document.createElement('div'); modal.className='modal'; modal.style.width='300px';
+      const title=document.createElement('h3'); title.textContent='界面设置'; modal.appendChild(title);
+      const form=document.createElement('div'); form.style.display='flex'; form.style.flexDirection='column'; form.style.gap='12px';
+
+      /* 字体缩放 */
+      const zoomWrap=document.createElement('label'); zoomWrap.textContent='字体缩放(%)'; zoomWrap.style.display='flex'; zoomWrap.style.alignItems='center'; zoomWrap.style.justifyContent='space-between';
+      const zoomInp=document.createElement('input'); zoomInp.type='number'; zoomInp.min=80; zoomInp.max=150; zoomInp.step=10; zoomInp.style.width='100px'; zoomInp.style.marginLeft='12px';
+      zoomInp.value=parseInt(localStorage.getItem('siteZoom')||'100',10); zoomWrap.appendChild(zoomInp); form.appendChild(zoomWrap);
+
+      modal.appendChild(form);
+      const actions=document.createElement('div'); actions.className='actions';
+      const ok=document.createElement('button'); ok.textContent='应用'; ok.className='btn-like';
+      const cancel=document.createElement('button'); cancel.textContent='取消'; cancel.className='btn-like btn-danger btn-small';
+      ok.onclick=()=>{
+        const pct=parseInt(zoomInp.value,10);
+        if(!isNaN(pct)&&pct>=80&&pct<=150){ localStorage.setItem('siteZoom',pct); document.documentElement.style.setProperty('--site-zoom', pct+'%'); }
+        document.body.removeChild(overlay);
+      };
+      cancel.onclick=()=> document.body.removeChild(overlay);
+      actions.appendChild(ok); actions.appendChild(cancel); modal.appendChild(actions);
+      overlay.appendChild(modal); document.body.appendChild(overlay);
     }
   }
 })(); 
