@@ -751,7 +751,19 @@ import { logInfo, logDebug } from './debug.js';
         uploadBtn.onclick=()=> fileInput.click();
 
         const delBtn=document.createElement('button'); delBtn.textContent='删除附件'; delBtn.className='btn-like btn-danger btn-small';
-        delBtn.onclick=()=>{ asset.image=''; img.style.display='none'; placeholder.style.display='block'; fileInput.value=''; };
+        delBtn.onclick=()=>{
+          asset.image='';
+          img.style.display='none';
+          placeholder.style.display='block';
+          // 清空文件输入的值，避免意外提交
+          fileInput.value='';
+          // 立即同步到表格行并自动保存
+          if(row){
+            updateRowFromAsset(row, asset);
+            row.dataset.extra = JSON.stringify(asset);
+            triggerAutoSave();
+          }
+        };
 
         btnWrap.appendChild(uploadBtn);
         btnWrap.appendChild(delBtn);
@@ -818,9 +830,17 @@ import { logInfo, logDebug } from './debug.js';
           const sel=cell.querySelector('select'); if(sel) sel.value = asset[assetKey] || '';
           break;
         case 'image':{
-          const img=cell.querySelector('img'); const placeholder=cell.querySelector('span');
-          if(asset.image){ img.src=asset.image; img.style.display='block'; if(placeholder) placeholder.style.display='none'; }
-          else{ if(img) img.style.display='none'; if(placeholder) placeholder.style.display='inline'; }
+          const img=cell.querySelector('img');
+          const placeholder=cell.querySelector('span');
+          if(asset.image){
+            // 更新/展示新图片
+            if(img){ img.src = asset.image; img.style.display = 'block'; }
+            if(placeholder) placeholder.style.display = 'none';
+          }else{
+            // 清空 src 以释放本地 base64 数据，彻底删除附件
+            if(img){ img.src = ''; img.style.display = 'none'; }
+            if(placeholder) placeholder.style.display = 'inline';
+          }
           break; }
         case 'date':{
           const dateInput=cell.querySelector('input[type="date"]'); const span=cell.querySelector('span');

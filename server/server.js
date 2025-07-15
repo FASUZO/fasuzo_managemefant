@@ -121,10 +121,13 @@ app.post('/api/data', (req, res) => {
   // 打印调试信息：请求体大小
   const bodySize = Buffer.byteLength(JSON.stringify(req.body));
   logger.info('Saving data, size:', bodySize, 'bytes');
+
   try {
-    const data = req.body;
-    if(Array.isArray(data.assets)){
-      data.assets = data.assets.map(a=>{
+    const newData = req.body;
+
+    // ---------- 处理图片字段 ----------
+    if(Array.isArray(newData.assets)){
+      newData.assets = newData.assets.map(a=>{
         if(a.image && a.image.startsWith('data:image')){
           try{
             const match = a.image.match(/^data:image\/(\w+);base64,(.+)$/);
@@ -141,8 +144,39 @@ app.post('/api/data', (req, res) => {
         return a;
       });
     }
-    fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
+
+    // ---------- 清理已删除的本地图片 ----------
+    let oldImages = [];
+    try{
+      if(fs.existsSync(DATA_PATH)){
+        const prev = JSON.parse(fs.readFileSync(DATA_PATH, 'utf-8'));
+        if(Array.isArray(prev.assets)){
+          oldImages = prev.assets
+            .map(a=>a.image)
+            .filter(img=> typeof img === 'string' && img.startsWith('/uploads/'));
+        }
+      }
+    }catch(e){ logger.error('读取旧数据时出错', e); }
+
+    const newImages = (newData.assets||[])
+      .map(a=>a.image)
+      .filter(img=> typeof img === 'string' && img.startsWith('/uploads/'));
+
+    const toDelete = oldImages.filter(img=> !newImages.includes(img));
+    toDelete.forEach(relPath=>{
+      try{
+        const abs = path.join(ROOT_DIR, relPath.replace(/^\//, ''));
+        if(fs.existsSync(abs)){
+          fs.unlinkSync(abs);
+          logger.info('已删除未使用的图片文件:', abs);
+        }
+      }catch(e){ logger.error('删除图片失败', e); }
+    });
+
+    // ---------- 写入新数据 ----------
+    fs.writeFileSync(DATA_PATH, JSON.stringify(newData, null, 2));
     res.json({ ok: true });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, err: err.message });
@@ -153,6 +187,54 @@ app.post('/api/data', (req, res) => {
 app.post('/api/reset', (req, res) => {
   fs.writeFileSync(DATA_PATH, JSON.stringify(DEFAULT_DATA, null, 2));
   res.json({ ok: true });
+});
+
+// 修复数据：清理不存在的附件引用并删除冗余文件
+app.post('/api/fix', (req, res) => {
+  try{
+    // 读取现有数据
+    const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf-8'));
+
+    if(!Array.isArray(data.assets)) data.assets = [];
+
+    // 收集引用的本地图片
+    const referenced = new Set();
+    let cleaned = 0;
+
+    data.assets.forEach(a=>{
+      if(a.image && typeof a.image === 'string' && a.image.startsWith('/uploads/')){
+        const abs = path.join(ROOT_DIR, a.image.replace(/^\//, ''));
+        if(fs.existsSync(abs)){
+          referenced.add(abs);
+        }else{
+          // 文件已不存在，清空引用
+          a.image = '';
+          cleaned++;
+        }
+      }
+    });
+
+    // 删除未被引用的文件
+    let deleted = 0;
+    const files = fs.readdirSync(UPLOAD_DIR);
+    files.forEach(f=>{
+      const abs = path.join(UPLOAD_DIR, f);
+      if(!referenced.has(abs)){
+        fs.unlinkSync(abs);
+        deleted++;
+      }
+    });
+
+    // 保存回数据
+    fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
+
+    logger.info(`修复数据完成，清理引用 ${cleaned} 个，删除文件 ${deleted} 个`);
+    res.json({ ok:true, cleaned, deleted });
+
+  }catch(err){
+    logger.error('修复数据失败', err);
+    res.status(500).json({ ok:false, message:err.message });
+  }
 });
 
 app.listen(PORT, () => {

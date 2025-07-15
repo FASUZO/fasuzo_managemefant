@@ -86,6 +86,7 @@ const ICON_HANDLE = `<svg viewBox="0 0 1106 1024" width="20" height="20"><path d
   const deleteTagBtn = document.getElementById('deleteTagBtn');
   const viewDataBtn = document.getElementById('viewDataBtn');
   const resetDataBtn = document.getElementById('resetDataBtn');
+  const fixDataBtn = document.getElementById('fixDataBtn');
 
   // 标记是否有未保存修改
   let pendingChanges = false;
@@ -516,6 +517,21 @@ function syncToServer(force = false) {
     if(!confirm('确定要重置所有数据吗？此操作不可撤销')) return;
     fetch('/api/reset', {method:'POST'}).then(r=>r.json()).then(()=>{ alert('数据已重置'); location.reload(); });
   });
+
+  // 修复数据：校对附件与本地文件，清理无效引用/冗余文件
+  if(fixDataBtn){
+    fixDataBtn.addEventListener('click', ()=>{
+      if(!confirm('将校验所有附件引用并删除无效照片，继续吗？')) return;
+      fetch('/api/fix',{method:'POST'})
+        .then(r=>r.json())
+        .then(d=>{
+          alert(`修复完成：已清理 ${d.cleaned||0} 个无效引用，删除 ${d.deleted||0} 个多余文件。`);
+          // 重新加载最新数据
+          location.reload();
+        })
+        .catch(e=>{ console.error(e); alert('修复失败，请检查控制台日志'); });
+    });
+  }
 
   // 修改数据
   editDataBtn.addEventListener('click', () => {

@@ -1,9 +1,10 @@
 version: "3.9"
 services:
-  asset:
+  fasuzo_management:
     build: .
-    container_name: asset-manager
+    restart: always
+    container_name: fasuzo_management
     ports:
       - "3000:3000"
     volumes:
-     - ./data:/app/data                    # 挂载整个数据目录 (data.json + uploads)
+     - ./data:/app/data
