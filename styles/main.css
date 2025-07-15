@@ -272,7 +272,7 @@ td input, td select {
 
 /* 隐藏列 */
 .hidden-col {
-  display: none;
+  display: none !important;
 }
 
 /* 通用按钮外观（用于自定义 label） */

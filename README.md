@@ -98,7 +98,7 @@ suzo_management/
 
 ```bash
 # 1. 克隆仓库
-$ git clone git@github.com:FASUZO/fasuzo_managemefant.git
+$ git clone --depth 1 https://github.com/FASUZO/fasuzo_management.git
 $ cd fasuzo_managemefant
 
 # 2. 安装依赖
@@ -125,14 +125,14 @@ $ npm start       # 打开 http://localhost:3000
 
 ```bash
 # 构建镜像
-$ docker build -t asset-manager:latest .
+$ docker build -t fasuzo_management:latest .
 
 # 运行容器 (数据持久化到宿主机 ./data)
 $ docker run -d \
-  --name asset-manager \
+  --name fasuzo_management \
   -p 3000:3000 \
   -v $(pwd)/data:/app/data \
-  asset-manager:latest
+  fasuzo_management:latest
 ```
 
 或使用 `docker-compose`：
@@ -142,7 +142,8 @@ version: "3.9"
 services:
   asset:
     build: .
-    container_name: asset-manager
+    container_name: fasuzo_management
+    restart: always
     ports:
       - "3000:3000"
     volumes:
