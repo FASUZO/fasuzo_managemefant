@@ -87,6 +87,14 @@ const ICON_HANDLE = `<svg viewBox="0 0 1106 1024" width="20" height="20"><path d
   const viewDataBtn = document.getElementById('viewDataBtn');
   const resetDataBtn = document.getElementById('resetDataBtn');
   const fixDataBtn = document.getElementById('fixDataBtn');
+  const backupDataBtn = document.getElementById('backupDataBtn');
+  const autoBackupDaysInput = document.getElementById('autoBackupDays');
+
+  // 初始化读取配置
+  fetch('/api/backup-config')
+    .then(r=>r.json())
+    .then(cfg=>{ if(autoBackupDaysInput) autoBackupDaysInput.value = cfg.days||0; })
+    .catch(()=>{});
 
   // 标记是否有未保存修改
   let pendingChanges = false;
@@ -174,6 +182,15 @@ const ICON_HANDLE = `<svg viewBox="0 0 1106 1024" width="20" height="20"><path d
     });
     updateAutoIcon();
 
+    /* ---------- 暗黑模式切换 ---------- */
+    const updateDarkIcon=()=> darkBtn.textContent = document.body.classList.contains('dark') ? '🌙' : '🌕';
+    const darkBtn = addIconButton('', '暗黑模式', ()=>{
+      darkToggleEl.checked = !darkToggleEl.checked;
+      darkToggleEl.dispatchEvent(new Event('change'));
+      updateDarkIcon();
+    });
+    updateDarkIcon();
+
     /* ---------- 设置弹窗 ---------- */
     addIconButton('❓','设置',openSettingsModal);
 
@@ -183,15 +200,6 @@ const ICON_HANDLE = `<svg viewBox="0 0 1106 1024" width="20" height="20"><path d
       const title=document.createElement('h3'); title.textContent='界面设置'; modal.appendChild(title);
 
       const formWrap=document.createElement('div'); formWrap.style.display='flex'; formWrap.style.flexDirection='column'; formWrap.style.gap='12px';
-
-      // 主宽度
-      const wLabel=document.createElement('label'); wLabel.textContent='主区域宽度(px)';
-      wLabel.style.display='flex'; wLabel.style.alignItems='center'; wLabel.style.justifyContent='space-between';
-      const widthInput=document.createElement('input'); widthInput.type='number'; widthInput.min=600; widthInput.max=2400; widthInput.step=100;
-      widthInput.style.width='100px'; widthInput.style.marginLeft='12px';
-      widthInput.value=parseInt(localStorage.getItem('mainWidth')||'1200',10);
-      wLabel.appendChild(widthInput);
-      formWrap.appendChild(wLabel);
 
       // 站点缩放
       const zLabel=document.createElement('label'); zLabel.textContent='字体缩放(%)';
@@ -209,8 +217,7 @@ const ICON_HANDLE = `<svg viewBox="0 0 1106 1024" width="20" height="20"><path d
       const cancelBtn=document.createElement('button'); cancelBtn.textContent='取消'; cancelBtn.className='btn-like btn-danger btn-small';
 
       okBtn.onclick=()=>{
-        const w=parseInt(widthInput.value,10); const z=parseInt(zoomInput.value,10);
-        if(!isNaN(w)&&w>=600&&w<=2400){ localStorage.setItem('mainWidth',w); document.documentElement.style.setProperty('--main-max-width', w+'px'); }
+        const z=parseInt(zoomInput.value,10);
         if(!isNaN(z)&&z>=80&&z<=150){ localStorage.setItem('siteZoom',z); document.documentElement.style.setProperty('--site-zoom', z+'%'); }
         document.body.removeChild(overlay);
       };
@@ -243,20 +250,15 @@ const ICON_HANDLE = `<svg viewBox="0 0 1106 1024" width="20" height="20"><path d
     document.querySelectorAll('.switch-bar .switch').forEach(el=>el.style.display='none');
 
     // 暗黑模式按钮（月亮 / 太阳）
-    const updateDarkIcon=()=> darkBtn.textContent = document.body.classList.contains('dark') ? '🌙' : '🌕';
-    const darkBtn = addIconButton('', '暗黑模式', ()=>{
-      darkToggleEl.checked = !darkToggleEl.checked;
-      darkToggleEl.dispatchEvent(new Event('change'));
-      updateDarkIcon();
-    });
-    updateDarkIcon();
+    // const updateDarkIcon=()=> darkBtn.textContent = document.body.classList.contains('dark') ? '🌙' : '🌕'; // This line is now redundant as it's moved above
+    // const darkBtn = addIconButton('', '暗黑模式', ()=>{ // This line is now redundant as it's moved above
+    //   darkToggleEl.checked = !darkToggleEl.checked;
+    //   darkToggleEl.dispatchEvent(new Event('change'));
+    //   updateDarkIcon();
+    // });
+    // updateDarkIcon();
 
-    /* -------- 主区域宽度调节 -------- */
-    const MAIN_WIDTH_KEY = 'mainWidth';
-    if(switchBar){
-      const stored = parseInt(localStorage.getItem(MAIN_WIDTH_KEY) || '1200', 10);
-      document.documentElement.style.setProperty('--main-max-width', stored + 'px');
-    }
+    /* 主区域宽度已迁移至资产页面设置 */
     /* -------- 全局字体缩放 -------- */
     const FONT_SCALE_KEY = 'siteZoom';
     {
@@ -531,6 +533,33 @@ function syncToServer(force = false) {
         })
         .catch(e=>{ console.error(e); alert('修复失败，请检查控制台日志'); });
     });
+  }
+
+  // 手动备份
+  if(backupDataBtn){
+    backupDataBtn.addEventListener('click', ()=>{
+      if(!confirm('立即备份当前数据？')) return;
+      fetch('/api/backup',{method:'POST'})
+        .then(r=>r.json())
+        .then(d=>{
+          if(d.ok) alert('备份成功: '+d.file);
+          else alert('备份失败: '+(d.message||'未知错误'));
+        })
+        .catch(e=>{ console.error(e); alert('备份失败，请检查控制台日志'); });
+    });
+  }
+
+  // 输入框更改自动备份间隔
+  if(autoBackupDaysInput){
+    const send = async()=>{
+      let days = parseInt(autoBackupDaysInput.value,10);
+      if(isNaN(days)||days<0){ days=0; autoBackupDaysInput.value=0; }
+      try{
+        await fetch('/api/backup-config',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({days})});
+      }catch(e){ console.error(e); alert('设置失败'); }
+    };
+    autoBackupDaysInput.addEventListener('change', send);
+    autoBackupDaysInput.addEventListener('blur', send);
   }
 
   // 修改数据

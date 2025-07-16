@@ -36,7 +36,7 @@ if(FONT_URL){
   try{
     // 仅处理相对路径，以 / 或 ./ 开头的情况；远程 URL 不作校验
     if(!/^https?:\/\//i.test(FONT_URL)){
-      const abs = path.isAbsolute(FONT_URL) ? FONT_URL : path.join(ROOT_DIR, FONT_URL.replace(/^\//,''));
+      const abs = path.isAbsolute(FONT_URL) ? FONT_URL : path.join(ROOT_DIR, FONT_URL.replace(/^\//, ''));
       if(!fs.existsSync(abs)){
         logger.info('FONT_URL 指向的文件不存在，已忽略:', FONT_URL);
         FONT_URL = '';
@@ -73,6 +73,44 @@ const STATIC_DIR = fs.existsSync(path.join(ROOT_DIR, 'dist'))
 const DATA_DIR = path.isAbsolute(DATA_DIR_ENV) ? DATA_DIR_ENV : path.join(ROOT_DIR, DATA_DIR_ENV);
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 const DATA_PATH = path.join(DATA_DIR, 'data.json');
+
+// -------- 备份与设置 --------
+const BACKUP_DIR = path.join(DATA_DIR,'backups');
+if(!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR);
+
+const SETTINGS_PATH = path.join(DATA_DIR, 'settings.json');
+function loadSettings(){
+  try{
+    if(fs.existsSync(SETTINGS_PATH)) return JSON.parse(fs.readFileSync(SETTINGS_PATH,'utf-8'));
+  }catch(e){ logger.error('读取设置失败',e); }
+  return { backupIntervalDays:7, lastBackupAt:0 };
+}
+function saveSettings(obj){
+  try{ fs.writeFileSync(SETTINGS_PATH, JSON.stringify(obj,null,2)); }
+  catch(e){ logger.error('保存设置失败',e); }
+}
+let settings = loadSettings();
+
+function createBackup(){
+  try{
+    const ts = new Date();
+    const name = `backup_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,'0')}${String(ts.getDate()).padStart(2,'0')}_${String(ts.getHours()).padStart(2,'0')}${String(ts.getMinutes()).padStart(2,'0')}${String(ts.getSeconds()).padStart(2,'0')}.json`;
+    const dest = path.join(BACKUP_DIR, name);
+    fs.copyFileSync(DATA_PATH, dest);
+    settings.lastBackupAt = Date.now();
+    saveSettings(settings);
+    logger.info('数据已备份至', dest);
+    return name;
+  }catch(e){ logger.error('备份失败', e); throw e; }
+}
+
+function maybeAutoBackup(){
+  const days = settings.backupIntervalDays || 0;
+  if(days<=0) return;
+  const due = (Date.now() - (settings.lastBackupAt||0)) >= days*24*60*60*1000;
+  if(due) createBackup();
+}
+// -------------------------
 
 // 图片上传目录（位于 data/uploads）
 const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
@@ -175,6 +213,9 @@ app.post('/api/data', (req, res) => {
 
     // ---------- 写入新数据 ----------
     fs.writeFileSync(DATA_PATH, JSON.stringify(newData, null, 2));
+
+    // 自动备份检查
+    maybeAutoBackup();
     res.json({ ok: true });
 
   } catch (err) {
@@ -197,15 +238,16 @@ app.post('/api/fix', (req, res) => {
 
     if(!Array.isArray(data.assets)) data.assets = [];
 
-    // 收集引用的本地图片
-    const referenced = new Set();
+    // 收集引用的本地图片文件名
+    const referenced = new Set(); // 文件名集合，如 img_xxx.jpg
     let cleaned = 0;
 
     data.assets.forEach(a=>{
-      if(a.image && typeof a.image === 'string' && a.image.startsWith('/uploads/')){
-        const abs = path.join(ROOT_DIR, a.image.replace(/^\//, ''));
+      if(a.image && typeof a.image === 'string' && a.image.includes('/uploads/')){
+        const filename = path.basename(a.image);
+        const abs = path.join(UPLOAD_DIR, filename);
         if(fs.existsSync(abs)){
-          referenced.add(abs);
+          referenced.add(filename);
         }else{
           // 文件已不存在，清空引用
           a.image = '';
@@ -217,11 +259,12 @@ app.post('/api/fix', (req, res) => {
     // 删除未被引用的文件
     let deleted = 0;
     const files = fs.readdirSync(UPLOAD_DIR);
-    files.forEach(f=>{
-      const abs = path.join(UPLOAD_DIR, f);
-      if(!referenced.has(abs)){
-        fs.unlinkSync(abs);
-        deleted++;
+    files.forEach(fname=>{
+      if(!referenced.has(fname)){
+        try{
+          fs.unlinkSync(path.join(UPLOAD_DIR, fname));
+          deleted++;
+        }catch(e){ logger.error('删除文件失败', e); }
       }
     });
 
@@ -235,6 +278,27 @@ app.post('/api/fix', (req, res) => {
     logger.error('修复数据失败', err);
     res.status(500).json({ ok:false, message:err.message });
   }
+});
+
+// 手动备份
+app.post('/api/backup', (req,res)=>{
+  try{
+    const file = createBackup();
+    res.json({ ok:true, file });
+  }catch(e){ res.status(500).json({ ok:false, message:e.message }); }
+});
+
+// 读取/更新备份配置
+app.get('/api/backup-config', (_,res)=>{
+  res.json({ days: settings.backupIntervalDays||0 });
+});
+
+app.post('/api/backup-config', (req,res)=>{
+  const days = parseInt(req.body.days,10);
+  if(isNaN(days) || days<0) return res.status(400).json({ ok:false, message:'invalid days' });
+  settings.backupIntervalDays = days;
+  saveSettings(settings);
+  res.json({ ok:true });
 });
 
 app.listen(PORT, () => {

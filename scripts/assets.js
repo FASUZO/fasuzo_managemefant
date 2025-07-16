@@ -370,7 +370,7 @@ import { logInfo, logDebug } from './debug.js';
     };
 
     // ------ 操作列单元格提前创建，供后续循环引用 ------
-    const actionTd = document.createElement('td'); actionTd.style.display='flex'; actionTd.style.gap='8px'; actionTd.style.alignItems='center'; actionTd.style.justifyContent='center';
+    const actionTd = document.createElement('td'); actionTd.classList.add('action-cell');
     const editBtn = document.createElement('button'); editBtn.innerHTML=ICON_EDIT; editBtn.title='编辑'; editBtn.className='icon-btn';
     const viewBtn = document.createElement('button'); viewBtn.innerHTML=ICON_VIEW; viewBtn.title='查看'; viewBtn.className='icon-btn'; viewBtn.style.marginLeft='6px';
     actionTd.appendChild(editBtn); actionTd.appendChild(viewBtn);
@@ -970,16 +970,30 @@ import { logInfo, logDebug } from './debug.js';
       const title=document.createElement('h3'); title.textContent='界面设置'; modal.appendChild(title);
       const form=document.createElement('div'); form.style.display='flex'; form.style.flexDirection='column'; form.style.gap='12px';
 
+      /* 主区域宽度 */
+      const wLabel=document.createElement('label'); wLabel.textContent='主区域宽度(px)'; wLabel.style.display='flex'; wLabel.style.alignItems='center'; wLabel.style.justifyContent='space-between';
+      const widthInput=document.createElement('input'); widthInput.type='number'; widthInput.min=600; widthInput.max=2400; widthInput.step=100; widthInput.style.width='100px'; widthInput.style.marginLeft='12px';
+      widthInput.value=parseInt(localStorage.getItem('mainWidth')||'1200',10);
+      wLabel.appendChild(widthInput); form.appendChild(wLabel);
+
       /* 字体缩放 */
       const zoomWrap=document.createElement('label'); zoomWrap.textContent='字体缩放(%)'; zoomWrap.style.display='flex'; zoomWrap.style.alignItems='center'; zoomWrap.style.justifyContent='space-between';
       const zoomInp=document.createElement('input'); zoomInp.type='number'; zoomInp.min=80; zoomInp.max=150; zoomInp.step=10; zoomInp.style.width='100px'; zoomInp.style.marginLeft='12px';
       zoomInp.value=parseInt(localStorage.getItem('siteZoom')||'100',10); zoomWrap.appendChild(zoomInp); form.appendChild(zoomWrap);
+
+      /* 列宽自适应 */
+      const fitLabel=document.createElement('label'); fitLabel.textContent='列宽自适应'; fitLabel.style.display='flex'; fitLabel.style.alignItems='center'; fitLabel.style.justifyContent='space-between';
+      const fitBtn=document.createElement('button'); fitBtn.textContent='重置'; fitBtn.className='btn-like btn-small';
+      fitBtn.onclick=()=>{ columnsMeta.forEach(c=>{ delete c.width; }); applyColumnWidths(); saveTableToServer(false); window.showToast('已重置列宽'); };
+      fitLabel.appendChild(fitBtn); form.appendChild(fitLabel);
 
       modal.appendChild(form);
       const actions=document.createElement('div'); actions.className='actions';
       const ok=document.createElement('button'); ok.textContent='应用'; ok.className='btn-like';
       const cancel=document.createElement('button'); cancel.textContent='取消'; cancel.className='btn-like btn-danger btn-small';
       ok.onclick=()=>{
+        const w=parseInt(widthInput.value,10);
+        if(!isNaN(w)&&w>=600&&w<=2400){ localStorage.setItem('mainWidth',w); document.documentElement.style.setProperty('--main-max-width', w+'px'); }
         const pct=parseInt(zoomInp.value,10);
         if(!isNaN(pct)&&pct>=80&&pct<=150){ localStorage.setItem('siteZoom',pct); document.documentElement.style.setProperty('--site-zoom', pct+'%'); }
         document.body.removeChild(overlay);

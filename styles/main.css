@@ -331,9 +331,8 @@ td.action-cell .btn-like{ margin:0 2px; }
 
 /* 居中操作列 */
 td.action-cell, th.action-cell{ text-align:center; }
-/* 操作列按钮居中并去除底部空隙 */
-td.action-cell{ display:flex; align-items:center; justify-content:center; gap:8px; padding:4px 0; }
-td.action-cell .icon-btn{ line-height:0; padding:4px; }
+td.action-cell{ padding:0; }
+td.action-cell .icon-btn{ line-height:0; padding:4px; margin:0 4px; vertical-align:middle; display:inline-flex; }
 td.action-cell .icon-btn svg{ display:block; }
 
 /* 模态框分区美化 */
@@ -766,3 +765,15 @@ body.dark .todo-row{border-color:#444;}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,0.8);color:#fff;padding:8px 18px;border-radius:4px;font-size:14px;opacity:0;transition:opacity .3s, transform .3s;z-index:1400;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.dark{background:rgba(255,255,255,0.85);color:#111;}
+
+/* 隐藏 number input 默认箭头 */
+.no-spin::-webkit-outer-spin-button,
+.no-spin::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.no-spin{ -moz-appearance:textfield; }
+
+/* --- 修正操作列垂直空隙 --- */
+#assetsTable td.action-cell{ padding:0; }
+#assetsTable td.action-cell .icon-btn{ height:24px; width:24px; display:inline-flex; align-items:center; justify-content:center; }
+
+/* 调整资产表格单元格上下内边距，行更紧凑 */
+#assetsTable tbody td{ padding-top:2px; padding-bottom:2px; }

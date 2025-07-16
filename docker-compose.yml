@@ -1,10 +1,10 @@
-version: "3.9"
 services:
   fasuzo_management:
+    image: fasuzo_management  # 直接指定镜像名，避免自动加前缀
     build: .
     restart: always
-    container_name: fasuzo_management
+    container_name: fasuzo_management  # 容器名（可选）
     ports:
       - "3000:3000"
     volumes:
-     - ./data:/app/data
+      - ./data:/app/data
