@@ -93,15 +93,16 @@ docker run -d \
 ### 3.3 使用 docker-compose（可选）
 `docker-compose.yml`：
 ```yaml
-version: "3.9"
 services:
-  asset:
+  fasuzo_management:
+    image: fasuzo_management  # 直接指定镜像名，避免自动加前缀
     build: .
-    container_name: asset-manager
+    restart: always
+    container_name: fasuzo_management  # 容器名（可选）
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app     # 本地 data 目录映射到容器
+      - ./data:/app/data
 ```
 启动：
 ```bash
