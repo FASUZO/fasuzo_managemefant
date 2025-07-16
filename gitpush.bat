@@ -19,11 +19,11 @@ if "%~1"=="" (
     set "ss=%%j"
   )
   :: 补零处理
-  if 1!mm! lss 110 set "mm=0!mm!"
-  if 1!dd! lss 110 set "dd=0!dd!"
-  if 1!hh! lss 110 set "hh=0!hh!"
-  if 1!mi! lss 110 set "mi=0!mi!"
-  if 1!ss! lss 110 set "ss=0!ss!"
+  set "mm=0!mm!" & set "mm=!mm:~-2!"
+  set "dd=0!dd!" & set "dd=!dd:~-2!"
+  set "hh=0!hh!" & set "hh=!hh:~-2!"
+  set "mi=0!mi!" & set "mi=!mi:~-2!"
+  set "ss=0!ss!" & set "ss=!ss:~-2!"
   set "fdate=!yy:~2,2!!mm!!dd!!hh!!mi!!ss!"
   set "commitmsg=chore: update !fdate!"
 ) else (
