@@ -7,16 +7,31 @@ set "repo=http://github.com/FASUZO/fasuzo_management.git"
 
 :: 参数解析
 if "%~1"=="" (
-  for /f "tokens=1-3 delims=/ " %%a in ("%date%") do set "fdate=%%c-%%b-%%a"
-  set "ftime=%time:~0,8%"
-  set "commitmsg=chore: update !fdate! !ftime!"
+  for /f "tokens=1-3 delims=/ " %%a in ("%date%") do (
+    set "yy=%%c"
+    set "mm=%%b"
+    set "dd=%%a"
+  )
+  for /f "tokens=1-3 delims=:." %%h in ("%time%") do (
+    set "hh=%%h"
+    set "mi=%%i"
+    set "ss=%%j"
+  )
+  :: 补零处理
+  if 1!mm! lss 110 set "mm=0!mm!"
+  if 1!dd! lss 110 set "dd=0!dd!"
+  if 1!hh! lss 110 set "hh=0!hh!"
+  if 1!mi! lss 110 set "mi=0!mi!"
+  if 1!ss! lss 110 set "ss=0!ss!"
+  set "fdate=!yy:~2,2!!mm!!dd!!hh!!mi!!ss!"
+  set "commitmsg=chore: update !fdate!"
 ) else (
   set "commitmsg=%*"
 )
 
 :: Step 1  检查 Git 安装
 echo.
-echo ====== 步骤 1/6：检查 Git 安装 ======
+echo ====== 步骤 1/8：检查 Git 安装 ======
 pause
 where git >nul 2>&1 || (
   echo 错误：未检测到Git，请先安装Git并添加到系统路径
@@ -26,7 +41,7 @@ where git >nul 2>&1 || (
 
 :: Step 2  初始化仓库（如缺失）
 echo.
-echo ====== 步骤 2/6：初始化仓库 ======
+echo ====== 步骤 2/8：初始化仓库 ======
 pause
 if not exist .git (
   echo 初始化Git仓库...
@@ -38,7 +53,7 @@ if not exist .git (
 
 :: Step 3  检查远程仓库配置
 echo.
-echo ====== 步骤 3/6：检查远程仓库 (origin) ======
+echo ====== 步骤 3/8：检查远程仓库 (origin) ======
 pause
 git remote | findstr "origin" >nul || (
   echo 警告：未配置远程仓库(origin)
@@ -47,9 +62,19 @@ git remote | findstr "origin" >nul || (
   git remote add origin "!repo!"
 )
 
-:: Step 4  添加更改到暂存区
+:: Step 4  清理暂存区
 echo.
-echo ====== 步骤 4/6：git add -A ======
+echo ====== 步骤 4/8：清理暂存区 (git reset) ======
+pause
+git reset
+if !errorlevel! neq 0 (
+  echo 错误：清理暂存区失败
+  exit /b 1
+)
+
+:: Step 5  添加更改到暂存区
+echo.
+echo ====== 步骤 5/8：git add -A ======
 pause
 git add -A
 if !errorlevel! neq 0 (
@@ -57,9 +82,9 @@ if !errorlevel! neq 0 (
   exit /b 1
 )
 
-:: Step 5  提交更改
+:: Step 6  提交更改
 echo.
-echo ====== 步骤 5/6：git commit ======
+echo ====== 步骤 6/8：git commit ======
 pause
 git commit -m "!commitmsg!"
 if !errorlevel! equ 0 (
@@ -68,9 +93,9 @@ if !errorlevel! equ 0 (
   echo 无需提交（工作区无变更）
 )
 
-:: Step 6  拉取远程更新并 rebase
+:: Step 7  拉取远程更新并 rebase
 echo.
-echo ====== 步骤 6/7：git pull --rebase origin main ======
+echo ====== 步骤 7/8：git pull --rebase origin main ======
 pause
 git pull --rebase origin main
 if !errorlevel! neq 0 (
@@ -78,9 +103,9 @@ if !errorlevel! neq 0 (
   exit /b 1
 )
 
-:: Step 7  推送更改至远程
+:: Step 8  推送更改至远程
 echo.
-echo ====== 步骤 7/7：git push -u origin main ======
+echo ====== 步骤 8/8：git push -u origin main ======
 pause
 git push -u origin main
 if !errorlevel! equ 0 (
